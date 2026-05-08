@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Commit After Task",
+  "description": "Automatically stages all changed files and commits them with a conventional commit message after each spec task is completed. Do not commit if only updating the task list, only commit if only if source files were modified.",
+  "version": "1",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "git add -A && git commit -m \"feat: complete spec task\""
+  }
+}

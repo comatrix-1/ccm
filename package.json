@@ -1,0 +1,31 @@
+{
+  "name": "course-inspector",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx}": "npx eslint --fix",
+    "*.{json,md,css,scss}": "npx prettier --write"
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest --run --passWithNoTests",
+    "test:watch": "vitest",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.8",
+    "fast-check": "^3.22.0",
+    "husky": "^9.1.7",
+    "jsdom": "^25.0.1",
+    "lint-staged": "^16.4.0",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "js-tiktoken": "^1.0.15",
+    "vite": "^5.4.21"
+  }
+}

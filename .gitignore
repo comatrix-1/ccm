@@ -1,0 +1,137 @@
+# ===========================
+# Dependencies
+# ===========================
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+vendor/
+__pypackages__/
+
+# ===========================
+# Build outputs
+# ===========================
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+.vite/
+*.egg-info/
+*.egg
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+target/
+*.class
+*.jar
+*.war
+
+# ===========================
+# Environment & secrets
+# ===========================
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+.secrets/
+
+# ===========================
+# Logs
+# ===========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===========================
+# Testing & coverage
+# ===========================
+coverage/
+.nyc_output/
+*.lcov
+.pytest_cache/
+htmlcov/
+.tox/
+
+# ===========================
+# Cache
+# ===========================
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.prettiercache
+*.tsbuildinfo
+.turbo/
+.sass-cache/
+
+# ===========================
+# OS files
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V8
+.Trashes
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ===========================
+# IDE & editors
+# ===========================
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+*~
+
+# ===========================
+# Kiro
+# ===========================
+.kiro/specs
+
+# ===========================
+# Terraform
+# ===========================
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ===========================
+# Docker
+# ===========================
+.dockerignore.local
+
+# ===========================
+# Miscellaneous
+# ===========================
+*.bak
+*.tmp
+*.temp
+*.orig
+.husky/_/

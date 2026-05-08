@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Course Content Monitor</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div id="popup-root">
+
+      <!-- ================================================================
+           Idle view — shown before any check has been run
+           ================================================================ -->
+      <div id="idle-view" class="view">
+        <header class="popup-header">
+          <h1 class="popup-title">Course Content Monitor</h1>
+          <p class="popup-subtitle">Check this page for broken links and outdated content.</p>
+        </header>
+        <div class="action-area">
+          <div class="check-options">
+            <label class="check-option">
+              <input type="checkbox" id="idle-check-links" checked />
+              Check Links
+            </label>
+            <label class="check-option">
+              <input type="checkbox" id="idle-semantic-check" checked />
+              Semantic Check
+            </label>
+          </div>
+          <button id="run-check-btn" class="btn btn-primary" type="button">
+            Run Check
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================
+           Loading view — shown while a check is in progress
+           ================================================================ -->
+      <div id="loading-view" class="view" hidden>
+        <header class="popup-header">
+          <h1 class="popup-title">Course Content Monitor</h1>
+        </header>
+        <div
+          id="loading-indicator"
+          class="loading-indicator"
+          role="status"
+          aria-live="polite"
+          aria-label="Check in progress"
+        >
+          <div class="spinner" aria-hidden="true"></div>
+          <span id="loading-phase-label" class="loading-phase-label">Checking…</span>
+        </div>
+      </div>
+
+      <!-- ================================================================
+           Complete view — shown when a check has finished
+           ================================================================ -->
+      <div id="complete-view" class="view" hidden>
+        <header class="popup-header">
+          <h1 class="popup-title">Course Content Monitor</h1>
+        </header>
+
+        <!-- Error banner — shown when the semantic check failed but link results are available -->
+        <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+        <!-- Severity summary -->
+        <div id="severity-summary" class="severity-summary" aria-label="Problem severity summary">
+          <div class="severity-badge severity-badge--high">
+            <span id="summary-high" class="severity-count">0</span>
+            <span class="severity-label">High</span>
+          </div>
+          <div class="severity-badge severity-badge--medium">
+            <span id="summary-medium" class="severity-count">0</span>
+            <span class="severity-label">Medium</span>
+          </div>
+          <div class="severity-badge severity-badge--low">
+            <span id="summary-low" class="severity-count">0</span>
+            <span class="severity-label">Low</span>
+          </div>
+        </div>
+
+        <!-- No problems message -->
+        <div id="no-problems-message" class="no-problems-message" hidden>
+          <span class="no-problems-icon" aria-hidden="true">✓</span>
+          No problems found
+        </div>
+
+        <!-- Broken links section -->
+        <section id="broken-links-section" class="results-section">
+          <h2 class="results-section__title">Broken Links</h2>
+          <ul id="broken-links-list" class="results-list" aria-label="Broken links"></ul>
+        </section>
+
+        <!-- Semantic issues section -->
+        <section id="semantic-issues-section" class="results-section">
+          <h2 class="results-section__title">Semantic Issues</h2>
+          <ul id="semantic-issues-list" class="results-list" aria-label="Semantic issues"></ul>
+        </section>
+
+        <!-- Re-run button -->
+        <div class="action-area action-area--footer">
+          <button id="view-report-btn" class="btn btn-secondary btn--small" type="button"
+                  aria-label="View full check report">View Report</button>
+          <div class="check-options">
+            <label class="check-option">
+              <input type="checkbox" id="complete-check-links" checked />
+              Check Links
+            </label>
+            <label class="check-option">
+              <input type="checkbox" id="complete-semantic-check" checked />
+              Semantic Check
+            </label>
+          </div>
+          <button id="rerun-check-btn" class="btn btn-primary" type="button">
+            Run Again
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================
+           Error view — shown when the check failed entirely
+           ================================================================ -->
+      <div id="error-view" class="view" hidden>
+        <header class="popup-header">
+          <h1 class="popup-title">Course Content Monitor</h1>
+        </header>
+        <div class="error-state" role="alert">
+          <span class="error-state__icon" aria-hidden="true">⚠</span>
+          <p id="error-message" class="error-state__message"></p>
+        </div>
+        <div class="action-area">
+          <div class="check-options">
+            <label class="check-option">
+              <input type="checkbox" id="error-check-links" checked />
+              Check Links
+            </label>
+            <label class="check-option">
+              <input type="checkbox" id="error-semantic-check" checked />
+              Semantic Check
+            </label>
+          </div>
+          <button id="retry-check-btn" class="btn btn-primary" type="button">
+            Try Again
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================
+           Report view — shown when the user clicks "View Report"
+           ================================================================ -->
+      <div id="report-view" class="view" hidden>
+        <header class="popup-header">
+          <button id="back-btn" class="btn btn-secondary btn--small"
+                  aria-label="Back to results">← Back</button>
+          <h1 class="popup-title">Check Report</h1>
+        </header>
+
+        <!-- Page metadata -->
+        <div id="report-meta" class="report-meta">
+          <span id="report-page-url" class="report-meta__url"></span>
+          <span id="report-checked-at" class="report-meta__timestamp"></span>
+        </div>
+
+        <!-- Links Checked section -->
+        <section id="report-links-section" class="results-section"
+                 aria-label="Links checked">
+          <h2 class="results-section__title">Links Checked</h2>
+          <p id="report-no-links-msg" class="report-empty-msg" hidden>
+            No links were found on this page.
+          </p>
+          <ul id="report-links-list" class="results-list"
+              aria-label="Link check results"></ul>
+        </section>
+
+        <!-- Semantic Check section -->
+        <section id="report-semantic-section" class="results-section"
+                 aria-label="Semantic check">
+          <h2 class="results-section__title">Semantic Check</h2>
+          <div id="report-coverage" class="report-coverage"></div>
+          <p id="report-truncation-notice" class="report-truncation-notice" hidden>
+            ⚠ Text was truncated before being sent to the LLM.
+          </p>
+          <p id="report-semantic-error" class="report-semantic-error" hidden></p>
+          <p id="report-no-outdated-msg" class="report-empty-msg" hidden>
+            No outdated sections were found.
+          </p>
+          <ul id="report-outdated-list" class="results-list"
+              aria-label="Outdated sections"></ul>
+        </section>
+      </div>
+
+    </div><!-- /#popup-root -->
+
+    <!-- ================================================================
+         Settings panel — always accessible at the bottom
+         ================================================================ -->
+    <div id="settings-panel" class="settings-panel">
+      <details class="settings-details">
+        <summary class="settings-summary">Settings</summary>
+        <div class="settings-content">
+          <label class="settings-label" for="api-key-input">
+            OpenRouter API Key
+          </label>
+          <div class="settings-input-row">
+            <input
+              id="api-key-input"
+              class="settings-input"
+              type="password"
+              placeholder="sk-…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+            <button id="save-api-key-btn" class="btn btn-secondary btn--small" type="button" hidden>
+              Save
+            </button>
+          </div>
+          <p class="settings-hint">
+            Your key is stored locally on this device only.
+          </p>
+        </div>
+      </details>
+    </div>
+
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
