@@ -108,8 +108,40 @@ export function parseLLMResponse(llmResponse, textContent) {
 }
 
 /**
+ * Resolves the fetch target for a semantic check call.
+ * @param {'proxy' | 'own-key'} mode - value of semanticMode from storage
+ * @param {string} apiKey - stored key (may be empty string)
+ * @param {string} proxyUrl - value of import.meta.env.VITE_PROXY_URL
+ * @returns {{ url: string, headers: Record<string, string> } | { error: string }}
+ */
+export function resolveSemanticTarget(mode, apiKey, proxyUrl) {
+  if (mode === 'own-key') {
+    const trimmedKey = (apiKey ?? '').replace(/[\r\n]/g, '').trim();
+    if (!trimmedKey) {
+      return {
+        error: 'No API key configured. Please add your OpenRouter API key in Settings.',
+      };
+    }
+    return {
+      url: 'https://openrouter.ai/api/v1/chat/completions',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${trimmedKey}`,
+      },
+    };
+  }
+  // mode === 'proxy' (or any other value — default to proxy)
+  return {
+    url: proxyUrl,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  };
+}
+
+/**
  * Sends page text content to the LLM for semantic evaluation.
- * Reads the API key from chrome.storage.local.
+ * Reads semanticMode from chrome.storage.local and routes via resolveSemanticTarget.
  *
  * @param {string} textContent - extracted page text (pre-truncated)
  * @param {Partial<SemanticCheckOptions>} options
@@ -117,30 +149,30 @@ export function parseLLMResponse(llmResponse, textContent) {
  */
 export async function runSemanticCheck(textContent, options = {}) {
   const model = options.model ?? 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free';
-  // Reasoning models on free tiers can be very slow — use a generous timeout.
-  // Can be overridden via options.timeoutMs for testing.
   const timeoutMs = options.timeoutMs ?? 120_000;
 
   console.log(`[semanticChecker] Starting semantic check — model: ${model}, timeout: ${timeoutMs}ms, content length: ${textContent.length} chars`);
 
-  // Read API key from storage
-  const stored = await chrome.storage.local.get('openrouterApiKey');
-  // Trim whitespace and strip any newline/carriage-return characters that would
-  // cause Chrome to silently drop the Authorization header entirely.
-  const apiKey = typeof stored?.openrouterApiKey === 'string'
-    ? stored.openrouterApiKey.replace(/[\r\n]/g, '').trim()
+  // Read mode and key from storage
+  const [localStored, sessionStored] = await Promise.all([
+    chrome.storage.local.get(['semanticMode']),
+    chrome.storage.session.get(['openrouterApiKey']),
+  ]);
+
+  const mode = localStored.semanticMode ?? 'proxy';
+  const apiKey = typeof sessionStored?.openrouterApiKey === 'string'
+    ? sessionStored.openrouterApiKey
     : '';
 
-  if (!apiKey) {
-    console.warn('[semanticChecker] No API key found in storage — aborting');
-    return {
-      outdatedSections: [],
-      semanticCheckError:
-        'No API key configured. Please add your OpenRouter API key in Settings.',
-    };
+  const proxyUrl = import.meta.env.VITE_PROXY_URL;
+  const target = resolveSemanticTarget(mode, apiKey, proxyUrl);
+
+  if ('error' in target) {
+    console.warn('[semanticChecker] resolveSemanticTarget returned error:', target.error);
+    return { outdatedSections: [], semanticCheckError: target.error };
   }
 
-  console.log(`[semanticChecker] API key found (length: ${apiKey.length}) — building prompt and sending request`);
+  console.log(`[semanticChecker] Routing to: ${target.url}`);
 
   const prompt = buildSemanticPrompt(textContent);
   const controller = new AbortController();
@@ -152,13 +184,10 @@ export async function runSemanticCheck(textContent, options = {}) {
 
   let rawJson;
   try {
-    console.log(`[semanticChecker] Sending fetch to OpenRouter (${new Date().toISOString()})`);
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    console.log(`[semanticChecker] Sending fetch (${new Date().toISOString()})`);
+    const response = await fetch(target.url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: target.headers,
       body: JSON.stringify({
         model,
         response_format: { type: 'json_object' },
@@ -172,9 +201,15 @@ export async function runSemanticCheck(textContent, options = {}) {
     if (!response.ok) {
       const body = await response.text().catch(() => '');
       console.error(`[semanticChecker] HTTP error ${response.status}: ${body}`);
+      if (response.status === 429) {
+        return {
+          outdatedSections: [],
+          semanticCheckError: 'Semantic check rate limit reached — please wait a moment and try again.',
+        };
+      }
       return {
         outdatedSections: [],
-        semanticCheckError: `Semantic check failed: HTTP ${response.status}. ${body}`.trim(),
+        semanticCheckError: `Semantic check failed: HTTP ${response.status}.`,
       };
     }
 
@@ -198,10 +233,6 @@ export async function runSemanticCheck(textContent, options = {}) {
     clearTimeout(timer);
   }
 
-  // Extract content string from OpenAI response envelope.
-  // Some reasoning models (e.g. nvidia/nemotron-3-nano-omni-30b-a3b-reasoning) return
-  // null for `content` and put their output in the `reasoning` field instead.
-  // Fall back to `reasoning` (or its alias `reasoning_content`) when `content` is absent.
   let llmResponse;
   try {
     const message = rawJson?.choices?.[0]?.message;
@@ -215,7 +246,6 @@ export async function runSemanticCheck(textContent, options = {}) {
             : null;
     console.log(`[semanticChecker] Raw content from LLM (first 200 chars): ${String(content).slice(0, 200)}`);
     if (typeof content !== 'string') throw new Error('no content field in response');
-    // Strip markdown code fences that reasoning models sometimes wrap around JSON
     const stripped = content.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
     llmResponse = JSON.parse(stripped);
     console.log(`[semanticChecker] Parsed LLM JSON — flaggedSections count: ${llmResponse?.flaggedSections?.length ?? 'N/A'}`);
@@ -223,17 +253,13 @@ export async function runSemanticCheck(textContent, options = {}) {
     console.error('[semanticChecker] Failed to parse LLM response content:', err);
     return {
       outdatedSections: [],
-      semanticCheckError:
-        'Semantic check returned an unexpected response. Link results are shown below.',
+      semanticCheckError: 'Semantic check returned an unexpected response. Link results are shown below.',
     };
   }
 
   const parsed = parseLLMResponse(llmResponse, textContent);
   console.log(`[semanticChecker] parseLLMResponse returned ${parsed.length} valid entries`);
 
-  // (block removed — all entries being discarded is a valid outcome, not a parse error)
-
-  // Deduplicate by exact sectionText (keep first occurrence)
   const seen = new Set();
   const deduplicated = parsed.filter((entry) => {
     if (seen.has(entry.sectionText)) return false;

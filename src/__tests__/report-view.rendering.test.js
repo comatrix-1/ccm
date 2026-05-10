@@ -22,6 +22,9 @@ vi.stubGlobal("chrome", {
   storage: {
     local: {
       get: mockStorageGet,
+    },
+    session: {
+      get: mockStorageGet,
       set: mockStorageSet,
     },
     onChanged: {

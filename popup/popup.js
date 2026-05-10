@@ -58,6 +58,39 @@ export function resolveCheckMode(linksChecked, semanticChecked) {
 }
 
 // ---------------------------------------------------------------------------
+// updateModeSelector — reflects semanticMode in the settings UI
+// ---------------------------------------------------------------------------
+
+/**
+ * Reflects the stored semanticMode in the UI.
+ * Sets the correct radio button and shows/hides the API key section.
+ * @param {'proxy' | 'own-key'} mode
+ */
+export function updateModeSelector(mode) {
+  const proxyRadio = document.getElementById('mode-proxy');
+  const ownKeyRadio = document.getElementById('mode-own-key');
+  const apiKeySection = document.getElementById('api-key-section');
+
+  if (proxyRadio) proxyRadio.checked = mode === 'proxy';
+  if (ownKeyRadio) ownKeyRadio.checked = mode === 'own-key';
+  if (apiKeySection) apiKeySection.hidden = mode !== 'own-key';
+}
+
+// ---------------------------------------------------------------------------
+// handleModeChange — persists mode selection and updates UI
+// ---------------------------------------------------------------------------
+
+/**
+ * Persists the selected mode to chrome.storage.local and updates the UI.
+ * @param {'proxy' | 'own-key'} newMode
+ */
+export function handleModeChange(newMode) {
+  chrome.storage.local.set({ semanticMode: newMode }, () => {
+    updateModeSelector(newMode);
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Phase label mapping
 // ---------------------------------------------------------------------------
 
@@ -534,13 +567,18 @@ let lastKnownResult = null;
  */
 export async function initPopup() {
   // --- Read initial state from storage ---
-  const stored = await new Promise((resolve) => {
-    chrome.storage.local.get(["checkState", "openrouterApiKey"], (items) => {
-      resolve(items);
-    });
-  });
+  // checkState lives in local storage (persists across browser restarts).
+  // openrouterApiKey lives in session storage (cleared when the browser closes).
+  const [localStored, sessionStored] = await Promise.all([
+    new Promise((resolve) => {
+      chrome.storage.local.get(["checkState", "semanticMode"], (items) => resolve(items));
+    }),
+    new Promise((resolve) => {
+      chrome.storage.session.get(["openrouterApiKey"], (items) => resolve(items));
+    }),
+  ]);
 
-  let storedApiKey = stored.openrouterApiKey ?? '';
+  let storedApiKey = sessionStored.openrouterApiKey ?? '';
 
   // Populate API key input if stored
   const apiKeyInput = document.getElementById("api-key-input");
@@ -549,8 +587,9 @@ export async function initPopup() {
   }
 
   // Render initial state
-  const popupState = checkStateToPopupState(stored.checkState, Date.now());
+  const popupState = checkStateToPopupState(localStored.checkState, Date.now());
   renderPopup(popupState);
+  updateModeSelector(localStored.semanticMode ?? 'proxy');
 
   // Track last known result for the report view
   if (popupState.status === "complete") {
@@ -698,10 +737,26 @@ export async function initPopup() {
       // Strip newlines and surrounding whitespace — stray newlines cause Chrome
       // to silently drop the Authorization header when the key is used in fetch().
       const key = apiKeyInput.value.replace(/[\r\n]/g, '').trim();
-      chrome.storage.local.set({ openrouterApiKey: key }, () => {
+      chrome.storage.session.set({ openrouterApiKey: key }, () => {
         storedApiKey = key;
         updateSaveButtonVisibility();
       });
+    });
+  }
+
+  // --- Wire up mode selector radio buttons ---
+  const modeProxyRadio = document.getElementById('mode-proxy');
+  const modeOwnKeyRadio = document.getElementById('mode-own-key');
+
+  if (modeProxyRadio) {
+    modeProxyRadio.addEventListener('change', () => {
+      if (modeProxyRadio.checked) handleModeChange('proxy');
+    });
+  }
+
+  if (modeOwnKeyRadio) {
+    modeOwnKeyRadio.addEventListener('change', () => {
+      if (modeOwnKeyRadio.checked) handleModeChange('own-key');
     });
   }
 }

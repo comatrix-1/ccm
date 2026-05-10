@@ -44,17 +44,73 @@ The extension is not published to the Chrome Web Store. Load it as an unpacked e
 
 The extension icon will appear in the toolbar.
 
+After any code change, run `npm run build` again, then click the refresh icon on the extension card in `chrome://extensions`.
+
+---
+
+## Local development
+
+### Run the proxy locally
+
+The proxy is a Vercel serverless function, but you can run it locally without deploying using the Vercel CLI:
+
+```bash
+npm install -g vercel
+cd vercel-proxy
+vercel dev
+```
+
+This starts a local server at `http://localhost:3000`. The endpoint will be available at `http://localhost:3000/api/semantic-check`.
+
+Create a `vercel-proxy/.env` file so the local server picks up the required env vars:
+
+```
+OPENROUTER_API_KEY=sk-or-v1-your-key-here
+EXTENSION_ORIGIN=chrome-extension://your-extension-id
+```
+
+To find your extension ID, check the card in `chrome://extensions` after loading the extension unpacked.
+
+### Point the extension at your local proxy
+
+Create a `.env` file at the repo root (not committed):
+
+```
+VITE_PROXY_URL=http://localhost:3000/api/semantic-check
+```
+
+Then rebuild and reload:
+
+```bash
+npm run build
+# reload the extension in chrome://extensions
+```
+
+### Quick test flow
+
+1. Start the local proxy: `vercel dev` inside `vercel-proxy/`
+2. Build the extension with the local proxy URL: `npm run build` from the repo root
+3. Load or reload the unpacked extension in `chrome://extensions`
+4. Open any webpage, click the extension icon, open **Settings**, select **Use shared proxy**, and run a semantic check
+
 ---
 
 ## Configuration
 
-The semantic check requires an [OpenRouter](https://openrouter.ai) API key.
+The semantic check supports two modes, selectable in the **Settings** panel:
+
+### Use shared proxy (default)
+
+No API key required. Requests are forwarded through a Vercel serverless proxy that keeps the OpenRouter key on the server side. A rate limit of **5 requests per 60-second window** applies per client IP.
+
+### Use my own API key
 
 1. Click the extension icon to open the popup.
 2. Expand the **Settings** panel at the bottom.
-3. Paste your OpenRouter API key and click **Save**.
+3. Select **Use my own API key**.
+4. Paste your [OpenRouter](https://openrouter.ai) API key and click **Save**.
 
-The key is stored locally in `chrome.storage.local` and never leaves your device except in requests to the OpenRouter API.
+The key is stored in `chrome.storage.session` and is cleared when the browser closes.
 
 The default model is `nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free`. You can change it by editing `src/semanticChecker.js`.
 
@@ -78,14 +134,16 @@ Click **View Report** for a detailed breakdown of every link result and the full
 ```
 Popup → background service worker → content script (page extraction)
                                   → link checker (parallel HEAD/GET fetches)
-                                  → semantic checker (OpenRouter LLM call)
+                                  → semantic checker ──► Vercel proxy ──► OpenRouter API
+                                                     └──► OpenRouter API (own-key mode)
                                   → fix suggestion generator
 ```
 
 - **Content script** (`content.js`) — injected into every page; extracts all links and visible text on request
 - **Background service worker** (`background.js`) — orchestrates the pipeline; all network I/O runs here
 - **Link checker** (`src/linkChecker.js`) — checks links in parallel with a global concurrency cap (10) and a per-domain cap (2); falls back from HEAD to GET on 405/403/404/429; retries once on timeout
-- **Semantic checker** (`src/semanticChecker.js`) — truncates page text to a 12 000-token limit, builds a structured prompt, calls the OpenRouter chat completions API, and validates the JSON response (including a hallucination guard that discards any flagged excerpt not found verbatim in the original text)
+- **Semantic checker** (`src/semanticChecker.js`) — truncates page text to a 12 000-token limit, builds a structured prompt, then routes the LLM call based on `semanticMode`: in proxy mode it POSTs to the Vercel proxy (no API key needed); in own-key mode it calls OpenRouter directly with the user's key. Validates the JSON response including a hallucination guard that discards any flagged excerpt not found verbatim in the original text
+- **Vercel proxy** (`vercel-proxy/api/semantic-check.js`) — serverless function that forwards requests to OpenRouter using a server-side API key; enforces per-IP rate limiting (5 req / 60 s)
 - **Popup** (`popup/popup.js`) — reads `checkState` from `chrome.storage.local` and re-renders on every change; no polling
 
 ---
@@ -185,12 +243,18 @@ Linting runs automatically on staged files via Husky + lint-staged (`eslint --fi
 │   └── popup.css          # Popup styles
 ├── src/
 │   ├── linkChecker.js     # Link reachability checker
-│   ├── semanticChecker.js # LLM-based semantic checker
+│   ├── semanticChecker.js # LLM-based semantic checker (proxy + own-key routing)
 │   ├── fixSuggestions.js  # Fix suggestion generator
 │   ├── pageExtractor.js   # Page extraction utilities
 │   ├── tokenizer.js       # Token counting (cl100k_base)
 │   ├── types.js           # JSDoc type definitions
 │   └── __tests__/         # Vitest test suite
+├── vercel-proxy/
+│   ├── api/
+│   │   └── semantic-check.js  # Vercel serverless proxy function
+│   ├── vercel.json            # Vercel project config
+│   ├── package.json           # No runtime dependencies
+│   └── README.md              # Proxy deployment and env var docs
 ├── icons/                 # Extension icons
 └── dist/                  # Built output (generated by `npm run build`)
 ```
@@ -199,7 +263,7 @@ Linting runs automatically on staged files via Husky + lint-staged (`eslint --fi
 
 ## Roadmap
 
-- [ ] Move API key to a backend proxy
+- [x] Move API key to a backend proxy
 - [ ] Publish to the Chrome Web Store
 - [ ] Publish to the Firefox Add-ons store (AMO)
 - [ ] Extend semantic link checking logic

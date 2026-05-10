@@ -199,25 +199,40 @@
       <details class="settings-details">
         <summary class="settings-summary">Settings</summary>
         <div class="settings-content">
-          <label class="settings-label" for="api-key-input">
-            OpenRouter API Key
-          </label>
-          <div class="settings-input-row">
-            <input
-              id="api-key-input"
-              class="settings-input"
-              type="password"
-              placeholder="sk-…"
-              autocomplete="off"
-              spellcheck="false"
-            />
-            <button id="save-api-key-btn" class="btn btn-secondary btn--small" type="button" hidden>
-              Save
-            </button>
+          <fieldset class="settings-fieldset">
+            <legend class="settings-label">Semantic check mode</legend>
+            <label class="check-option">
+              <input type="radio" name="semantic-mode" id="mode-proxy" value="proxy" />
+              Use shared proxy
+            </label>
+            <label class="check-option">
+              <input type="radio" name="semantic-mode" id="mode-own-key" value="own-key" />
+              Use my own API key
+            </label>
+          </fieldset>
+
+          <!-- API key section — shown only when mode is "own-key" -->
+          <div id="api-key-section">
+            <label class="settings-label" for="api-key-input">
+              OpenRouter API Key
+            </label>
+            <div class="settings-input-row">
+              <input
+                id="api-key-input"
+                class="settings-input"
+                type="password"
+                placeholder="sk-…"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button id="save-api-key-btn" class="btn btn-secondary btn--small" type="button" hidden>
+                Save
+              </button>
+            </div>
+            <p class="settings-hint">
+              Your key is stored for this browser session only and cleared when the browser closes.
+            </p>
           </div>
-          <p class="settings-hint">
-            Your key is stored locally on this device only.
-          </p>
         </div>
       </details>
     </div>

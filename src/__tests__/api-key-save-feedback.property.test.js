@@ -18,16 +18,20 @@ import * as fc from "fast-check";
 // Chrome API mock — must be set up before importing popup.js
 // ---------------------------------------------------------------------------
 
-const mockStorageGet = vi.fn();
-const mockStorageSet = vi.fn();
+const mockStorageLocalGet = vi.fn();
+const mockStorageSessionGet = vi.fn();
+const mockStorageSessionSet = vi.fn();
 const mockStorageOnChangedAddListener = vi.fn();
 const mockRuntimeSendMessage = vi.fn();
 
 vi.stubGlobal("chrome", {
   storage: {
     local: {
-      get: mockStorageGet,
-      set: mockStorageSet,
+      get: mockStorageLocalGet,
+    },
+    session: {
+      get: mockStorageSessionGet,
+      set: mockStorageSessionSet,
     },
     onChanged: {
       addListener: mockStorageOnChangedAddListener,
@@ -130,7 +134,7 @@ describe(
     beforeEach(() => {
       setupDOM();
       vi.clearAllMocks();
-      mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+      mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
       mockRuntimeSendMessage.mockResolvedValue(undefined);
     });
 
@@ -142,11 +146,12 @@ describe(
           fc.asyncProperty(storedKeyArb, async (storedKey) => {
             setupDOM();
             vi.clearAllMocks();
-            mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+            mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
             mockRuntimeSendMessage.mockResolvedValue(undefined);
 
             // Mock storage returning the stored key (or nothing when undefined)
-            mockStorageGet.mockImplementation((_keys, cb) =>
+            mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+            mockStorageSessionGet.mockImplementation((_keys, cb) =>
               cb(storedKey !== undefined ? { openrouterApiKey: storedKey } : {})
             );
 
@@ -174,7 +179,7 @@ describe(
     beforeEach(() => {
       setupDOM();
       vi.clearAllMocks();
-      mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+      mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
       mockRuntimeSendMessage.mockResolvedValue(undefined);
     });
 
@@ -194,10 +199,11 @@ describe(
             async ([storedKey, inputValue]) => {
               setupDOM();
               vi.clearAllMocks();
-              mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+              mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
               mockRuntimeSendMessage.mockResolvedValue(undefined);
 
-              mockStorageGet.mockImplementation((_keys, cb) =>
+              mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+              mockStorageSessionGet.mockImplementation((_keys, cb) =>
                 cb(
                   storedKey !== undefined
                     ? { openrouterApiKey: storedKey }
@@ -236,13 +242,13 @@ describe(
     beforeEach(() => {
       setupDOM();
       vi.clearAllMocks();
-      mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+      mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
       mockRuntimeSendMessage.mockResolvedValue(undefined);
     });
 
     test(
       "for any new key that differs from the stored key, clicking Save hides the button " +
-        "and calls chrome.storage.local.set with the new key",
+        "and calls chrome.storage.session.set with the new key",
       async () => {
         await fc.assert(
           fc.asyncProperty(
@@ -255,10 +261,11 @@ describe(
             async ([storedKey, newKey]) => {
               setupDOM();
               vi.clearAllMocks();
-              mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+              mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
               mockRuntimeSendMessage.mockResolvedValue(undefined);
 
-              mockStorageGet.mockImplementation((_keys, cb) =>
+              mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+              mockStorageSessionGet.mockImplementation((_keys, cb) =>
                 cb(
                   storedKey !== undefined
                     ? { openrouterApiKey: storedKey }
@@ -283,7 +290,7 @@ describe(
               expect(saveBtn.hidden).toBe(true);
 
               // Storage should have been called with the trimmed new key
-              expect(mockStorageSet).toHaveBeenCalledWith(
+              expect(mockStorageSessionSet).toHaveBeenCalledWith(
                 { openrouterApiKey: newKey.trim() },
                 expect.any(Function)
               );
@@ -308,22 +315,23 @@ describe(
     beforeEach(() => {
       setupDOM();
       vi.clearAllMocks();
-      mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+      mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
       mockRuntimeSendMessage.mockResolvedValue(undefined);
     });
 
     test(
-      "for any API key string stored in chrome.storage.local, " +
+      "for any API key string stored in chrome.storage.session, " +
         "the API key input is populated with that value after initPopup()",
       async () => {
         await fc.assert(
           fc.asyncProperty(apiKeyArb, async (key) => {
             setupDOM();
             vi.clearAllMocks();
-            mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+            mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
             mockRuntimeSendMessage.mockResolvedValue(undefined);
 
-            mockStorageGet.mockImplementation((_keys, cb) =>
+            mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+            mockStorageSessionGet.mockImplementation((_keys, cb) =>
               cb({ openrouterApiKey: key })
             );
 

@@ -2,13 +2,18 @@ import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fc from 'fast-check';
 
 // ---------------------------------------------------------------------------
-// We need to mock chrome.storage.local before importing the module under test.
+// We need to mock chrome.storage.local and chrome.storage.session before
+// importing the module under test.
 // ---------------------------------------------------------------------------
 const mockStorageGet = vi.fn();
+const mockLocalStorageGet = vi.fn();
 
 vi.stubGlobal('chrome', {
   storage: {
     local: {
+      get: mockLocalStorageGet,
+    },
+    session: {
       get: mockStorageGet,
     },
   },
@@ -178,10 +183,15 @@ describe('runSemanticCheck()', () => {
     vi.stubGlobal('chrome', {
       storage: {
         local: {
+          get: mockLocalStorageGet,
+        },
+        session: {
           get: mockStorageGet,
         },
       },
     });
+    // Default: proxy mode (no API key needed)
+    mockLocalStorageGet.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -189,6 +199,8 @@ describe('runSemanticCheck()', () => {
   });
 
   test('missing API key returns error result without throwing', async () => {
+    // In own-key mode with no key, resolveSemanticTarget returns an error
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: undefined });
     const result = await runSemanticCheck(textContent, {});
     expect(result.outdatedSections).toEqual([]);
@@ -196,6 +208,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('LLM API non-200 response returns outdatedSections: [] with semanticCheckError set', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503, text: async () => 'Service Unavailable' }));
     const result = await runSemanticCheck(textContent, {});
@@ -204,6 +217,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('LLM API timeout returns outdatedSections: [] with timeout semanticCheckError', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(Object.assign(new Error('timeout'), { name: 'AbortError' })));
     const result = await runSemanticCheck(textContent, {});
@@ -212,6 +226,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('response wrapped in markdown code fences is parsed correctly', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     const jsonPayload = JSON.stringify({
       flaggedSections: [
@@ -231,6 +246,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('response wrapped in plain code fences (no language tag) is parsed correctly', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     const jsonPayload = JSON.stringify({
       flaggedSections: [
@@ -250,6 +266,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('invalid JSON response returns outdatedSections: [] with unexpected-response semanticCheckError', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -261,6 +278,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('all-malformed entries (non-empty flaggedSections, all discarded) sets semanticCheckError', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -282,6 +300,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('duplicate sectionText entries are deduplicated (first occurrence kept)', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -305,6 +324,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('response with null content but valid reasoning field is parsed correctly', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -328,6 +348,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('response with null content but valid reasoning_content field is parsed correctly', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -351,6 +372,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('response with null content and null reasoning returns unexpected-response error', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -364,6 +386,7 @@ describe('runSemanticCheck()', () => {
   });
 
   test('successful response returns parsed OutdatedSection[] with no semanticCheckError', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -404,10 +427,14 @@ describe('runSemanticCheck() — Property 1: Bug Condition — All-Discarded Ret
     vi.stubGlobal('chrome', {
       storage: {
         local: {
+          get: mockLocalStorageGet,
+        },
+        session: {
           get: mockStorageGet,
         },
       },
     });
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
   });
 
@@ -527,10 +554,14 @@ describe('runSemanticCheck() — Property 2: Preservation — Genuine Error Path
     vi.stubGlobal('chrome', {
       storage: {
         local: {
+          get: mockLocalStorageGet,
+        },
+        session: {
           get: mockStorageGet,
         },
       },
     });
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({ openrouterApiKey: 'sk-test' });
   });
 
@@ -580,9 +611,10 @@ describe('runSemanticCheck() — Property 2: Preservation — Genuine Error Path
     expect(result.semanticCheckError).toContain('timed out');
   });
 
-  // Property test D: missing API key — chrome.storage.local.get returns {}
+  // Property test D: missing API key — chrome.storage.session.get returns {} with own-key mode
   // Validates: Requirement 3.6
   test('Property D — missing API key: semanticCheckError contains "No API key" and outdatedSections is []', async () => {
+    mockLocalStorageGet.mockResolvedValue({ semanticMode: 'own-key' });
     mockStorageGet.mockResolvedValue({});
 
     const result = await runSemanticCheck(textContent, {});

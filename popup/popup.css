@@ -705,3 +705,21 @@ body::-webkit-scrollbar-thumb:hover {
   border-color: var(--color-medium-border);
   color: var(--color-medium);
 }
+
+/* --------------------------------------------------------------------------
+   Mode selector fieldset
+   -------------------------------------------------------------------------- */
+.settings-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.settings-fieldset legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-1);
+}

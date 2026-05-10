@@ -1,0 +1,6 @@
+{
+  "name": "vercel-proxy",
+  "version": "1.0.0",
+  "description": "Vercel serverless proxy for OpenRouter API calls on behalf of the Course Content Monitor Chrome extension",
+  "type": "module"
+}

@@ -10,16 +10,20 @@ import { describe, test, expect, beforeEach, vi } from "vitest";
 // Chrome API mock — must be set up before importing popup.js
 // ---------------------------------------------------------------------------
 
-const mockStorageGet = vi.fn();
-const mockStorageSet = vi.fn();
+const mockStorageLocalGet = vi.fn();
+const mockStorageSessionGet = vi.fn();
+const mockStorageSessionSet = vi.fn();
 const mockStorageOnChangedAddListener = vi.fn();
 const mockRuntimeSendMessage = vi.fn();
 
 vi.stubGlobal("chrome", {
   storage: {
     local: {
-      get: mockStorageGet,
-      set: mockStorageSet,
+      get: mockStorageLocalGet,
+    },
+    session: {
+      get: mockStorageSessionGet,
+      set: mockStorageSessionSet,
     },
     onChanged: {
       addListener: mockStorageOnChangedAddListener,
@@ -104,8 +108,9 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
     setupDOM();
     vi.clearAllMocks();
     // Default: no stored key, set callback is a no-op
-    mockStorageGet.mockImplementation((_keys, cb) => cb({}));
-    mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
     mockRuntimeSendMessage.mockResolvedValue(undefined);
   });
 
@@ -114,7 +119,8 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
   // Requirements: 1.2, 1.3
   // -------------------------------------------------------------------------
   test("button hidden and input empty when no stored key exists", async () => {
-    mockStorageGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) => cb({}));
 
     await initPopup();
 
@@ -131,7 +137,8 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
   // -------------------------------------------------------------------------
   test("button hidden and input populated when stored key exists", async () => {
     const storedKey = "sk-test-key-abc123";
-    mockStorageGet.mockImplementation((_keys, cb) =>
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) =>
       cb({ openrouterApiKey: storedKey })
     );
 
@@ -150,7 +157,8 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
   // -------------------------------------------------------------------------
   test("button becomes visible when user types a value different from stored key", async () => {
     const storedKey = "sk-original-key";
-    mockStorageGet.mockImplementation((_keys, cb) =>
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) =>
       cb({ openrouterApiKey: storedKey })
     );
 
@@ -175,7 +183,8 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
   // -------------------------------------------------------------------------
   test("button hides again when user clears input back to the stored key value", async () => {
     const storedKey = "sk-original-key";
-    mockStorageGet.mockImplementation((_keys, cb) =>
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) =>
       cb({ openrouterApiKey: storedKey })
     );
 
@@ -201,10 +210,11 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
   // -------------------------------------------------------------------------
   test("clicking Save hides the button after a successful save", async () => {
     const storedKey = "sk-old-key";
-    mockStorageGet.mockImplementation((_keys, cb) =>
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) =>
       cb({ openrouterApiKey: storedKey })
     );
-    mockStorageSet.mockImplementation((_data, cb) => cb && cb());
+    mockStorageSessionSet.mockImplementation((_data, cb) => cb && cb());
 
     await initPopup();
 
@@ -228,7 +238,8 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
   // Requirements: 4.1
   // -------------------------------------------------------------------------
   test("#api-key-input has type='password' and autocomplete='off'", async () => {
-    mockStorageGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) => cb({}));
 
     await initPopup();
 
@@ -243,7 +254,8 @@ describe("api-key-save-feedback — settings panel behaviour", () => {
   // Requirements: 4.2
   // -------------------------------------------------------------------------
   test("settings panel contains <details> and <summary> elements", async () => {
-    mockStorageGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageLocalGet.mockImplementation((_keys, cb) => cb({}));
+    mockStorageSessionGet.mockImplementation((_keys, cb) => cb({}));
 
     await initPopup();
 
