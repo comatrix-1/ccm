@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — VitalityCCM</title>
+    <!-- Removed external Google Fonts to satisfy no-external-resources tests -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <header>
+      <div class="container">
+        <a href="index.html" class="logo" aria-label="VitalityCCM home">
+          <span class="logo-mark" aria-hidden="true">V</span>
+          <span class="logo-text">VitalityCCM</span>
+        </a>
+        <nav id="site-nav" aria-label="Site navigation">
+          <a href="index.html">Home</a>
+          <a href="privacy-policy.html" aria-current="page">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+          <a href="PLACEHOLDER_CHROME_STORE_URL" class="nav-cta">Get Started</a>
+        </nav>
+        <button
+          class="nav-toggle"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+          aria-controls="site-nav"
+          type="button"
+        >
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="container" style="padding-top: 3rem; padding-bottom: 4rem;">
+        <h1>Privacy Policy</h1>
+        <p class="effective-date">Effective: <time datetime="2025-07-14">July 14, 2025</time></p>
+
+        <section class="policy-section">
+          <h2>About VitalityCCM</h2>
+          <p>
+            This privacy policy applies to the <strong>VitalityCCM</strong> Chrome browser extension. If you have
+            questions or concerns about this policy, you can contact the developer at
+            <a href="mailto:contact@example.com">contact@example.com</a>.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>Data We Access</h2>
+          <p>
+            When you run a check, the extension reads the text content and hyperlinks of your active browser tab solely
+            to perform the checks you request (link checking and/or semantic checking). This data is not stored
+            persistently and is not transmitted to any third party except as described in this policy.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>Semantic Check &amp; Data Transmission</h2>
+          <p>
+            When you invoke the semantic check feature, the page text extracted from your active tab is sent to the
+            <strong>OpenRouter LLM API</strong> for analysis. This transmission occurs in one of two ways:
+          </p>
+          <ul>
+            <li>
+              <strong>Via the developer's Vercel proxy</strong> — if you have not provided your own API key, requests
+              are routed through the developer's Vercel-hosted proxy, which forwards them to OpenRouter.
+            </li>
+            <li>
+              <strong>Directly to OpenRouter</strong> — if you supply your own OpenRouter API key, requests are sent
+              directly from your browser to the OpenRouter API without passing through the proxy.
+            </li>
+          </ul>
+          <p>
+            In both cases, the page text is used solely to generate the semantic check result and is subject to
+            <a href="https://openrouter.ai/privacy" rel="noopener noreferrer">OpenRouter's privacy policy</a>.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>API Key Storage</h2>
+          <p>
+            If you choose to provide your own OpenRouter API key, it is stored exclusively in
+            <code>chrome.storage.session</code>. This storage is scoped to the current browser session and is
+            automatically cleared when the browser session ends (e.g., when you close the browser). The API key is
+            never written to disk, synced across devices, or transmitted to the developer.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>No Personal Data Collected</h2>
+          <p>
+            VitalityCCM does not collect, store, or transmit to the developer any personally identifiable information
+            (PII). This includes, but is not limited to:
+          </p>
+          <ul>
+            <li>Names or usernames</li>
+            <li>Email addresses</li>
+            <li>Browsing history</li>
+            <li>Location data</li>
+            <li>Any other information that could be used to identify you</li>
+          </ul>
+        </section>
+
+        <section class="policy-section">
+          <h2>Rate Limiting &amp; IP Handling</h2>
+          <p>
+            The developer's Vercel proxy applies per-IP rate limiting to prevent abuse. Your client IP address is
+            processed by the proxy solely for the purpose of enforcing this rate limit. The developer does not log,
+            store, or otherwise retain IP addresses beyond what Vercel's infrastructure requires to route the request.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-left">
+          <span class="logo-text">VitalityCCM</span>
+          <p>&copy; <span id="year">2025</span> VitalityCCM. All rights reserved.</p>
+        </div>
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <a href="index.html">Home</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+      (function () {
+        const btn = document.querySelector('.nav-toggle');
+        const nav = document.getElementById('site-nav');
+        if (!btn || !nav) return;
+        btn.addEventListener('click', function () {
+          const isOpen = nav.classList.toggle('is-open');
+          btn.setAttribute('aria-expanded', String(isOpen));
+        });
+      })();
+    </script>
+  </body>
+</html>

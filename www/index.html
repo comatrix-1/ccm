@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VitalityCCM — Course Content Monitor</title>
+    <!-- Removed external Google Fonts to satisfy no-external-resources tests -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Background texture -->
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <!-- ===== HEADER ===== -->
+    <header>
+      <div class="container">
+        <a href="index.html" class="logo" aria-label="VitalityCCM home">
+          <span class="logo-mark" aria-hidden="true">V</span>
+          <span class="logo-text">VitalityCCM</span>
+        </a>
+        <nav id="site-nav" aria-label="Site navigation">
+          <a href="index.html" aria-current="page">Home</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+          <a href="PLACEHOLDER_CHROME_STORE_URL" class="nav-cta btn-cta">Get Started</a>
+        </nav>
+        <button
+          class="nav-toggle"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+          aria-controls="site-nav"
+          type="button"
+        >
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <!-- ===== HERO ===== -->
+      <section class="hero" aria-labelledby="hero-heading">
+        <div class="container">
+          <div class="hero-badges" aria-label="Extension highlights">
+            <span class="badge">
+              <span class="badge-dot" aria-hidden="true"></span>
+              Chrome Extension
+            </span>
+            <span class="badge">AI-Powered</span>
+            <span class="badge">Free to Install</span>
+          </div>
+
+          <h1 id="hero-heading">
+            Keep your courses<br />
+            <em>accurate</em> and<br />
+            up to date.
+          </h1>
+
+          <p class="hero-sub">
+            VitalityCCM scans any course page in your browser — catching broken
+            links and semantically outdated content before your students do.
+          </p>
+
+          <div class="hero-actions">
+            <a href="PLACEHOLDER_CHROME_STORE_URL" class="btn-primary">
+              Get Started
+            </a>
+          <a href="#features" class="btn-ghost">See what it checks →</a>
+          </div>
+
+          <!-- Screenshot previews -->
+          <div class="hero-screenshots">
+            <div class="hero-screenshot">
+              <div class="screenshot-bar" aria-hidden="true">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+                <span class="screenshot-title">VitalityCCM — popup</span>
+              </div>
+              <div class="screenshot-body">
+                <img
+                  src="extension.png"
+                  alt="VitalityCCM extension popup showing scan options and controls"
+                  width="800"
+                  height="600"
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+            </div>
+
+            <div class="hero-screenshot">
+              <div class="screenshot-bar" aria-hidden="true">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+                <span class="screenshot-title">VitalityCCM — scan report</span>
+              </div>
+              <div class="screenshot-body">
+                <img
+                  src="extension-report.png"
+                  alt="VitalityCCM extension showing a scan report with severity-labelled issues and fix suggestions"
+                  width="1280"
+                  height="800"
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== FEATURES ===== -->
+      <section class="features" id="features" aria-labelledby="features-heading">
+        <div class="container">
+          <div class="section-label" aria-hidden="true">What it checks</div>
+          <h2 id="features-heading">
+            Everything a course<br />
+            <em>auditor needs</em>
+          </h2>
+          <p class="section-sub">
+            One extension. Two scan modes. Five targeted checks — all surfaced
+            directly in your browser without leaving the page.
+          </p>
+
+          <div class="feature-grid">
+            <article class="feature-card feature-card--large">
+              <div class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M10 2L2 6v8l8 4 8-4V6l-8-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                  <path d="M2 6l8 4 8-4" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M10 10v8" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <h3>Link Checking</h3>
+              <p>
+                Scans every link on the page and flags broken or unreachable URLs, so you can fix dead ends before students hit them.
+              </p>
+              <span class="feature-tag">Automated</span>
+            </article>
+
+            <article class="feature-card feature-card--large">
+              <div class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M10 6v4l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h3>Semantic Check</h3>
+              <p>
+                Uses an LLM to detect outdated terminology, deprecated tools,
+                and stale references — catching what a link check never could.
+              </p>
+              <span class="feature-tag">AI-Powered</span>
+            </article>
+
+            <article class="feature-card">
+              <div class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M6 8h8M6 12h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <h3>Severity Badges</h3>
+              <p>
+                Every issue is labelled critical, warning, or info — so you
+                know exactly what to fix first.
+              </p>
+            </article>
+
+            <article class="feature-card">
+              <div class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <h3>Fix Suggestions</h3>
+              <p>
+                Each flagged issue includes a clear suggestion to speed up your review.
+              </p>
+            </article>
+
+            <article class="feature-card">
+              <div class="feature-icon" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M4 6h12M4 10h8M4 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <circle cx="16" cy="14" r="3" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <h3>Selective Check Mode</h3>
+              <p>
+                Run only link checks, only semantic checks, or both — giving you
+                control over scope and API usage.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== HOW IT WORKS ===== -->
+      <section class="how-it-works" aria-labelledby="how-heading">
+        <div class="container">
+          <div class="section-label" aria-hidden="true">How it works</div>
+          <h2 id="how-heading">
+            From install to<br />
+            <em>first scan</em> in minutes
+          </h2>
+
+          <ol class="steps" aria-label="Setup steps">
+            <li class="step">
+              <span class="step-num" aria-hidden="true">01</span>
+              <div class="step-content">
+                <h3>Install the extension</h3>
+                <p>
+                  Add VitalityCCM from the Chrome Web Store. No account
+                  required to start.
+                </p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num" aria-hidden="true">02</span>
+              <div class="step-content">
+                <h3>Add your API key</h3>
+                <p>
+                  Paste your OpenAI API key into the extension settings to
+                  unlock semantic checks.
+                </p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-num" aria-hidden="true">03</span>
+              <div class="step-content">
+                <h3>Open any course page &amp; scan</h3>
+                <p>
+                  Click the extension icon, choose your scan mode, and get a
+                  full report in seconds.
+                </p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="cta-block">
+            <a href="https://github.com/comatrix-1/ccm" class="btn-primary">
+              Get Started
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+      <div class="container">
+        <div class="footer-left">
+          <span class="logo-text">VitalityCCM</span>
+          <p>&copy; <span id="year">2025</span> VitalityCCM. All rights reserved.</p>
+        </div>
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <a href="index.html">Home</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      (function () {
+        const btn = document.querySelector('.nav-toggle');
+        const nav = document.getElementById('site-nav');
+        if (!btn || !nav) return;
+        btn.addEventListener('click', function () {
+          const isOpen = nav.classList.toggle('is-open');
+          btn.setAttribute('aria-expanded', String(isOpen));
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms of Use — VitalityCCM</title>
+    <!-- Removed external Google Fonts to satisfy no-external-resources tests -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <header>
+      <div class="container">
+        <a href="index.html" class="logo" aria-label="VitalityCCM home">
+          <span class="logo-mark" aria-hidden="true">V</span>
+          <span class="logo-text">VitalityCCM</span>
+        </a>
+        <nav id="site-nav" aria-label="Site navigation">
+          <a href="index.html">Home</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms.html" aria-current="page">Terms of Use</a>
+          <a href="PLACEHOLDER_CHROME_STORE_URL" class="nav-cta">Get Started</a>
+        </nav>
+        <button
+          class="nav-toggle"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+          aria-controls="site-nav"
+          type="button"
+        >
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+          <span class="nav-toggle-bar"></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <div class="container" style="padding-top: 3rem; padding-bottom: 4rem;">
+        <h1>Terms of Use</h1>
+        <p class="effective-date">Effective: <time datetime="2025-07-14">July 14, 2025</time></p>
+
+        <section class="policy-section">
+          <h2>Acceptance of Terms</h2>
+          <p>
+            By installing or using the <strong>VitalityCCM</strong> Chrome browser extension or visiting this website,
+            you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not install or
+            use the extension. We reserve the right to update these terms at any time; continued use of the extension
+            after changes are posted constitutes your acceptance of the revised terms.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>Permitted Use</h2>
+          <p>
+            VitalityCCM is provided for personal and professional use to assist you in inspecting course content pages
+            for link integrity and semantic quality. You may use the extension only for lawful purposes and in
+            accordance with these terms. You agree not to use the extension to access, scrape, or process content from
+            pages you are not authorised to view, to circumvent any access controls, or to interfere with the operation
+            of any third-party service. The extension must not be reverse-engineered, decompiled, or redistributed
+            without prior written permission from the developer.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>Intellectual Property</h2>
+          <p>
+            All source code, design assets, documentation, and other materials comprising VitalityCCM are the exclusive
+            intellectual property of the developer and are protected by applicable copyright and intellectual property
+            laws. Nothing in these terms grants you any ownership interest in the extension or its associated materials.
+            You are granted a limited, non-exclusive, non-transferable licence to use the extension solely for its
+            intended purpose as described in these terms.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>Disclaimer of Warranties</h2>
+          <p>
+            VitalityCCM is provided <strong>"as is"</strong> and <strong>"as available"</strong> without warranties of
+            any kind, either express or implied, including but not limited to implied warranties of merchantability,
+            fitness for a particular purpose, and non-infringement. The developer does not warrant that the extension
+            will be error-free, uninterrupted, or free of harmful components, or that any defects will be corrected.
+            You use the extension entirely at your own risk.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>Limitation of Liability</h2>
+          <p>
+            To the fullest extent permitted by applicable law, the developer shall not be liable for any indirect,
+            incidental, special, consequential, or punitive damages arising out of or related to your use of or
+            inability to use VitalityCCM, even if the developer has been advised of the possibility of such damages.
+            In no event shall the developer's total liability to you for all claims arising from or related to the
+            extension exceed the amount you paid, if any, for access to the extension.
+          </p>
+        </section>
+
+        <section class="policy-section">
+          <h2>Governing Law</h2>
+          <p>
+            These Terms of Use shall be governed by and construed in accordance with the laws of the jurisdiction in
+            which the developer is domiciled, without regard to its conflict-of-law provisions. Any dispute arising
+            under or in connection with these terms shall be subject to the exclusive jurisdiction of the courts of
+            that jurisdiction. If any provision of these terms is found to be unenforceable, the remaining provisions
+            shall continue in full force and effect.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-left">
+          <span class="logo-text">VitalityCCM</span>
+          <p>&copy; <span id="year">2025</span> VitalityCCM. All rights reserved.</p>
+        </div>
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <a href="index.html">Home</a>
+          <a href="privacy-policy.html">Privacy Policy</a>
+          <a href="terms.html">Terms of Use</a>
+        </nav>
+      </div>
+    </footer>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+      (function () {
+        const btn = document.querySelector('.nav-toggle');
+        const nav = document.getElementById('site-nav');
+        if (!btn || !nav) return;
+        btn.addEventListener('click', function () {
+          const isOpen = nav.classList.toggle('is-open');
+          btn.setAttribute('aria-expanded', String(isOpen));
+        });
+      })();
+    </script>
+  </body>
+</html>
