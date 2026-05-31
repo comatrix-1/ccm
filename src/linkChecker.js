@@ -4,38 +4,133 @@
  */
 
 // ---------------------------------------------------------------------------
+// Rendered page check service (headless browser for SPAs)
+// ---------------------------------------------------------------------------
+
+/**
+ * URL of the headless browser service for checking rendered page content.
+ * Set via environment variable VITE_CHECK_RENDERED_URL.
+ * @type {string | null}
+ */
+const CHECK_RENDERED_URL =
+  typeof import.meta !== 'undefined' && import.meta.env?.VITE_CHECK_RENDERED_URL
+    ? import.meta.env.VITE_CHECK_RENDERED_URL
+    : null;
+
+/**
+ * Calls the headless browser service to check if a page returns soft-404
+ * content after JS hydration. Used as a fallback when the initial fetch
+ * response doesn't contain rendered content (e.g., for SPAs like Next.js).
+ *
+ * @param {string} url - The URL to check
+ * @returns {Promise<{isSoft404: boolean, matchedPatterns: string[]} | null>}
+ *   Returns null if the service is not configured or the request fails.
+ */
+async function checkRenderedPage(url) {
+  if (!CHECK_RENDERED_URL) {
+    console.log(`[linkChecker] checkRenderedPage — service not configured (VITE_CHECK_RENDERED_URL not set)`);
+    return null;
+  }
+
+  try {
+    console.log(`[linkChecker] checkRenderedPage — calling headless browser service for ${url}`);
+    const response = await fetch(CHECK_RENDERED_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+
+    if (!response.ok) {
+      console.log(`[linkChecker] checkRenderedPage — service returned ${response.status}`);
+      return null;
+    }
+
+    const result = await response.json();
+    console.log(`[linkChecker] checkRenderedPage — ${url} → isSoft404: ${result.isSoft404}, matchedPatterns: ${JSON.stringify(result.matchedPatterns)}`);
+    return result;
+  } catch (err) {
+    console.log(`[linkChecker] checkRenderedPage — error: ${err.message}`);
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Soft-404 detection registry
 // ---------------------------------------------------------------------------
 
 /**
- * Map from hostname to an array of string patterns that indicate a soft 404.
+ * Generic soft-404 patterns that apply to all hostnames.
  * If any pattern is found (case-insensitive substring match) in the first
  * SOFT_404_BODY_PREFIX_BYTES bytes of the response body, the link is
  * classified as broken with reason.type === "content_404".
  *
+ * @type {string[]}
+ */
+const DEFAULT_SOFT_404_PATTERNS = [
+  'Not Found',
+  '404',
+  "doesn't look right",
+  "can't find",
+  "doesn't exist",
+  'no longer available',
+  'has been removed',
+  'has been deleted',
+  'is not found',
+  'was not found',
+  'page not found',
+  'file not found',
+  'resource not found',
+  'content not found',
+];
+
+/**
+ * Additional soft-404 patterns for specific hostnames.
+ * These are combined with DEFAULT_SOFT_404_PATTERNS when checking URLs
+ * on those hosts.
+ *
  * @type {Record<string, string[]>}
  */
-const SOFT_404_PATTERNS = {
-  'github.com': ['Not Found', '404'],
+const HOST_SPECIFIC_SOFT_404_PATTERNS = {
+  'github.com': [
+    "isn't public",
+    'have been archived',
+    'repository could not be found',
+    'could not find the repository',
+    'repository not found',
+    'this repository does not exist',
+    'this repository has been archived',
+    'this repository has been removed',
+    'tag not found',
+    'branch not found',
+    'commit not found',
+  ],
 };
 
 /** Number of bytes to read from the response body for soft-404 detection. */
 const SOFT_404_BODY_PREFIX_BYTES = 4096;
 
 /**
+ * SPA indicator patterns found in the initial HTML shell.
+ * @type {string[]}
+ */
+const SPA_INDICATORS = ['_next', '__NEXT_DATA__', 'react-root', 'data-reactroot', 'ng-component', 'vue-app'];
+
+/**
  * Reads the first SOFT_404_BODY_PREFIX_BYTES bytes of a response body and
- * checks whether any soft-404 pattern for the given hostname is present.
- *
- * Returns false immediately (without reading the body) if the hostname is
- * not in SOFT_404_PATTERNS.
+ * checks for both soft-404 patterns and SPA indicators in a single pass.
  *
  * @param {Response} response - a fetch Response with a readable body
  * @param {string} hostname
- * @returns {Promise<boolean>} true if a soft-404 pattern is detected
+ * @returns {Promise<{isSoft404: boolean, isPotentialSpa: boolean}>}
  */
-async function checkBodyForSoft404(response, hostname) {
-  const patterns = SOFT_404_PATTERNS[hostname];
-  if (!patterns) return false;
+async function checkBodyAndDetectSpa(response, hostname) {
+  const hostSpecific = HOST_SPECIFIC_SOFT_404_PATTERNS[hostname] ?? [];
+  const patterns = [...DEFAULT_SOFT_404_PATTERNS, ...hostSpecific];
+
+  // If response has no body or body is not readable, return default (not soft-404, not SPA)
+  if (!response.body || typeof response.body.getReader !== 'function') {
+    return { isSoft404: false, isPotentialSpa: false };
+  }
 
   const reader = response.body.getReader();
   const chunks = [];
@@ -63,7 +158,25 @@ async function checkBodyForSoft404(response, hostname) {
   }
 
   const bodyText = new TextDecoder().decode(combined);
-  return patterns.some((pattern) => bodyText.toLowerCase().includes(pattern.toLowerCase()));
+  const bodyTextLower = bodyText.toLowerCase();
+  console.log(`[linkChecker] checkBodyAndDetectSpa bodyText (${bodyText.length} chars) for ${hostname}: "${bodyText.substring(0, 200)}${bodyText.length > 200 ? '...' : ''}"`);
+
+  // Check for soft-404 patterns
+  const matchedPattern = patterns.find((pattern) => bodyTextLower.includes(pattern.toLowerCase()));
+  if (matchedPattern) {
+    console.log(`[linkChecker] checkBodyAndDetectSpa — MATCHED soft-404 pattern: "${matchedPattern}" on ${hostname}`);
+  }
+
+  // Check for SPA indicators
+  const isPotentialSpa = SPA_INDICATORS.some((indicator) => bodyTextLower.includes(indicator));
+  if (isPotentialSpa) {
+    console.log(`[linkChecker] checkBodyAndDetectSpa — SPA indicators detected for ${hostname}`);
+  }
+
+  return {
+    isSoft404: !!matchedPattern,
+    isPotentialSpa,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -231,23 +344,29 @@ export async function checkSingleLink(link, options) {
         return { ...broken({ type: 'http_error', statusCode: getStatus }), attemptCount, soft404Result };
       }
 
-      // 2xx GET fallback — check body for soft-404 before reporting ok
+      // 2xx GET fallback — check body for soft-404 and SPA indicators
       const getFallbackHostname = new URL(url).hostname;
-      if (SOFT_404_PATTERNS[getFallbackHostname]) {
-        // getResponse body is still open — pass it directly to checkBodyForSoft404
-        // which reads the prefix and cancels the reader internally
-        const isSoft404 = await checkBodyForSoft404(getResponse, getFallbackHostname);
-        soft404Result = isSoft404 ? 'triggered' : 'passed';
-        if (isSoft404) {
-          console.log(`[linkChecker] BROKEN (content_404) ${url}`);
+      const { isSoft404, isPotentialSpa } = await checkBodyAndDetectSpa(getResponse, getFallbackHostname);
+
+      if (isSoft404) {
+        soft404Result = 'triggered';
+        console.log(`[linkChecker] BROKEN (content_404) ${url} — matched via initial body text`);
+        return { ...broken({ type: 'content_404' }), attemptCount, soft404Result };
+      }
+
+      // For SPAs, try the headless browser service
+      if (isPotentialSpa && CHECK_RENDERED_URL) {
+        const renderedResult = await checkRenderedPage(url);
+        if (renderedResult && renderedResult.isSoft404) {
+          soft404Result = 'triggered';
+          console.log(`[linkChecker] BROKEN (content_404) ${url} — matched via headless browser`);
           return { ...broken({ type: 'content_404' }), attemptCount, soft404Result };
         }
+        soft404Result = renderedResult ? 'passed' : 'not_checked';
       } else {
-        // Not a soft-404 host — discard body and return ok
-        if (getResponse.body) {
-          try { getResponse.body.cancel(); } catch { /* ignore */ }
-        }
+        soft404Result = 'passed';
       }
+
       return { status: 'ok', url, statusCode: getStatus, attemptCount, soft404Result };
     }
 
@@ -259,36 +378,51 @@ export async function checkSingleLink(link, options) {
 
     // 2xx (or anything else) — check body for soft-404 before reporting ok
     const hostname = new URL(url).hostname;
-    if (SOFT_404_PATTERNS[hostname]) {
-      // HEAD responses have no body; issue a GET to read the body prefix
-      let getResponse;
-      try {
-        console.log(`[linkChecker] GET (soft-404 check) ${url}`);
-        getResponse = await withTimeout(() =>
-          fetch(url, {
-            method: 'GET',
-            redirect: 'follow',
-            headers: {
-              Range: `bytes=0-${SOFT_404_BODY_PREFIX_BYTES - 1}`,
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            },
-          })
-        );
-      } catch (err) {
-        console.log(`[linkChecker] GET (soft-404 check) ${url} → THREW ${err.name}: ${err.message}`);
-        if (err.name === 'AbortError') {
-          if (attempt < maxAttempts) continue;
-          return { ...broken({ type: 'timeout' }), attemptCount, soft404Result };
-        }
-        return { ...broken({ type: 'network_error', message: err.message ?? String(err) }), attemptCount, soft404Result };
+    // HEAD responses have no body; issue a GET to read the body prefix
+    let getResponse;
+    try {
+      console.log(`[linkChecker] GET (soft-404 check) ${url}`);
+      getResponse = await withTimeout(() =>
+        fetch(url, {
+          method: 'GET',
+          redirect: 'follow',
+          headers: {
+            Range: `bytes=0-${SOFT_404_BODY_PREFIX_BYTES - 1}`,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+          },
+        })
+      );
+    } catch (err) {
+      console.log(`[linkChecker] GET (soft-404 check) ${url} → THREW ${err.name}: ${err.message}`);
+      if (err.name === 'AbortError') {
+        if (attempt < maxAttempts) continue;
+        return { ...broken({ type: 'timeout' }), attemptCount, soft404Result };
       }
+      return { ...broken({ type: 'network_error', message: err.message ?? String(err) }), attemptCount, soft404Result };
+    }
 
-      const isSoft404 = await checkBodyForSoft404(getResponse, hostname);
-      soft404Result = isSoft404 ? 'triggered' : 'passed';
-      if (isSoft404) {
-        console.log(`[linkChecker] BROKEN (content_404) ${url}`);
+    // Check body for soft-404 patterns and SPA indicators in a single pass
+    const { isSoft404, isPotentialSpa } = await checkBodyAndDetectSpa(getResponse, hostname);
+
+    if (isSoft404) {
+      soft404Result = 'triggered';
+      console.log(`[linkChecker] BROKEN (content_404) ${url} — matched via initial body text`);
+      return { ...broken({ type: 'content_404' }), attemptCount, soft404Result };
+    }
+
+    // Body text check didn't find soft-404 patterns.
+    // For SPA pages (Next.js, React, Vue), the initial response is just the HTML
+    // shell without rendered content. Use headless browser to check rendered content.
+    if (isPotentialSpa && CHECK_RENDERED_URL) {
+      const renderedResult = await checkRenderedPage(url);
+      if (renderedResult && renderedResult.isSoft404) {
+        soft404Result = 'triggered';
+        console.log(`[linkChecker] BROKEN (content_404) ${url} — matched via headless browser: ${JSON.stringify(renderedResult.matchedPatterns)}`);
         return { ...broken({ type: 'content_404' }), attemptCount, soft404Result };
       }
+      soft404Result = renderedResult ? 'passed' : 'not_checked';
+    } else {
+      soft404Result = 'passed';
     }
 
     return { status: 'ok', url, statusCode: status, attemptCount, soft404Result };

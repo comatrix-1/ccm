@@ -83,10 +83,16 @@ describe('checkSingleLink()', () => {
     const mockFetch = vi.fn();
     // First call never resolves (timeout)
     mockFetch.mockImplementationOnce(() => new Promise(() => {}));
-    // Second call (retry) resolves immediately with 200
+    // Second call (retry) — HEAD returns 200
     mockFetch.mockImplementationOnce(() =>
       Promise.resolve({ status: 200, headers: { get: () => null } })
     );
+    // Third call — GET for soft-404 check returns 200 without soft-404 body
+    mockFetch.mockResolvedValueOnce({
+      status: 200,
+      headers: { get: () => null },
+      body: { cancel: vi.fn() },
+    });
     vi.stubGlobal('fetch', mockFetch);
 
     const link = makeLink('https://cn.vite.dev/config/');
@@ -98,7 +104,8 @@ describe('checkSingleLink()', () => {
     const result = await resultPromise;
 
     expect(result.status).toBe('ok');
-    expect(mockFetch.mock.calls.length).toBe(2);
+    // 3 calls: initial HEAD (timeout) + retry HEAD (200) + GET for soft-404 check (200)
+    expect(mockFetch.mock.calls.length).toBe(3);
   });
 
   test('301 → 301 → 200 (2 hops) follows redirect and returns ok', async () => {
