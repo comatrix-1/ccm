@@ -100,6 +100,14 @@ _Example of marking unclear requirements:_
 - **[Entity 1]**: [What it represents, key attributes without implementation]
 - **[Entity 2]**: [What it represents, relationships to other entities]
 
+## Non-Functional Requirements _(mandatory)_
+
+- Performance budgets: [Define measurable budgets relevant to this feature]
+- Accessibility (WCAG 2.1 AA): [Contrast, focus order, keyboard navigation, semantics]
+- UX consistency: [Components, spacing, copy tone; loading/empty/error states]
+- Code quality: [Lint/format must pass; API docs for new modules]
+- Reliability: [Timeouts, retries/backoff, actionable errors]
+
 ## Success Criteria _(mandatory)_
 
 <!--

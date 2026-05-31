@@ -1,73 +1,113 @@
-# [PROJECT_NAME] Constitution
+<!--
+Sync Impact Report
+- Version change: N/A → 1.0.0
+- Modified principles: New (I–IV established)
+- Added sections: "Quality Gates & Tooling", "Development Workflow & Review Process"
+- Removed sections: None (template placeholders replaced)
+- Templates requiring updates:
+  - ✅ .specify/templates/plan-template.md (Constitution Check gates aligned)
+  - ✅ .specify/templates/spec-template.md (Added Non-Functional Requirements section)
+  - ✅ .specify/templates/tasks-template.md (Tests marked REQUIRED; terminology aligned)
+- Follow-up TODOs: None
+-->
 
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Course Content Monitor (CCM) Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
+### I. Code Quality & Maintainability
 
-<!-- Example: I. Library-First -->
+Non-negotiable rules:
 
-[PRINCIPLE_1_DESCRIPTION]
+- Code MUST pass automated linting and formatting on every commit and PR.
+- Complexity MUST be contained: small, cohesive modules; functions ≤ ~50 LOC unless justified.
+- Public APIs and modules MUST include clear JSDoc/TSDoc types and usage examples.
+- Changes MUST include refactoring when technical debt is touched (“boy scout rule”).
+- Dependencies MUST be minimal and justified; avoid heavy libraries when native/web APIs suffice.
 
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+Rationale: Consistently readable, well-structured code reduces defects, accelerates onboarding,
+lowers maintenance cost, and enables safe iteration over time.
 
-### [PRINCIPLE_2_NAME]
+### II. Testing Discipline & Coverage
 
-<!-- Example: II. CLI Interface -->
+Non-negotiable rules:
 
-[PRINCIPLE_2_DESCRIPTION]
+- Tests MUST be written for new/changed behavior before or alongside implementation.
+- The test pyramid MUST be respected: fast unit tests first; integration for critical flows;
+  end-to-end only when necessary.
+- All CI MUST run tests on every PR; coverage for changed lines MUST be ≥ 80% and overall
+  project coverage SHOULD be ≥ 70%.
+- Flaky tests are NOT allowed in main; any flake MUST be quarantined and fixed within 48h.
+- Test artifacts MUST be deterministic and hermetic (no external network without explicit mocks).
 
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+Rationale: A reliable, fast test suite is the primary safety net for refactors, performance work,
+and rapid delivery without regressions.
 
-### [PRINCIPLE_3_NAME]
+### III. UX Consistency & Accessibility
 
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+Non-negotiable rules:
 
-[PRINCIPLE_3_DESCRIPTION]
+- User-visible changes MUST follow a consistent design system (components, spacing, colors,
+  states) and copy guidelines.
+- Accessibility MUST meet WCAG 2.1 AA intents for keyboard navigation, contrast, focus
+  management, and semantics.
+- Interaction states (loading, error, empty) MUST be explicit and non-blocking; no spinner-only
+  dead-ends.
+- Content and settings MUST persist and recover gracefully across extension reloads when applicable.
+- UX changes MUST include screenshots or short clips in PRs when UI is affected.
 
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+Rationale: Predictable, accessible interfaces improve efficiency and trust for all users and
+reduce support burden.
 
-### [PRINCIPLE_4_NAME]
+### IV. Performance & Reliability
 
-<!-- Example: IV. Integration Testing -->
+Non-negotiable rules:
 
-[PRINCIPLE_4_DESCRIPTION]
+- UI MUST remain responsive: no long tasks on the main thread; offload work to background/
+  workers where possible.
+- Budgets MUST be defined and honored per feature:
+  - Popup initial render ≤ 200ms on a mid-range laptop.
+  - Long operations MUST stream progress; background checks MUST have concurrency limits.
+- p95 operation times MUST be tracked in dev for critical paths; regressions ≥ 20% require
+  explicit justification and follow-up issues.
+- Network calls MUST have timeouts and retries with backoff; failures MUST surface actionable
+  messages.
+- Bundle size growth MUST be monitored; additions ≥ 50KB gzip require justification and
+  alternatives considered.
 
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+Rationale: Fast, resilient behavior keeps the extension usable at scale and prevents lockups or
+excess resource use.
 
-### [PRINCIPLE_5_NAME]
+## Quality Gates & Tooling
 
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+- CI MUST enforce: lint + format, type checks (via JSDoc/TS where applicable), tests, and
+  coverage thresholds.
+- Pre-commit hooks MUST run lint and minimal tests on staged files.
+- Performance budgets and UX acceptance criteria MUST be specified in plan/spec for any
+  user-visible feature.
+- Observability for development (structured console logs, debug toggles) MUST be present to
+  diagnose issues without production data leakage.
 
-[PRINCIPLE_5_DESCRIPTION]
+## Development Workflow & Review Process
 
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
-
-## [SECTION_2_NAME]
-
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
-
-[SECTION_2_CONTENT]
-
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
-
-## [SECTION_3_NAME]
-
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
-
-[SECTION_3_CONTENT]
-
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Every PR MUST:
+  - Link to a spec/plan item defining acceptance tests, UX impacts, and performance budgets.
+  - Include before/after screenshots for UI changes and note accessibility checks.
+  - Pass all CI gates; no bypassing on main branches.
+- Reviews MUST verify alignment with the four core principles and request changes when violated.
+- Release notes MUST summarize user-facing changes and any performance implications.
 
 ## Governance
 
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+- Authority: This constitution supersedes any ad-hoc practices for code quality, testing, UX, and
+  performance in this repository.
+- Amendments: Propose via PR updating this file with rationale and any template changes. Require
+  reviewer approval. Provide migration or follow-up tasks if principles change materially.
+- Versioning policy: Semantic versioning of this constitution
+  - MAJOR: Backward-incompatible governance/principle removals or redefinitions
+  - MINOR: New principle/section added or materially expanded guidance
+  - PATCH: Clarifications/wording/typo fixes without changing intent
+- Compliance: Enforced through CI gates and code review. Periodic audits each release cycle confirm
+  adherence; violations MUST be tracked with issues and remediation owners.
 
-[GOVERNANCE_RULES]
-
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
-
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-05-31 | **Last Amended**: 2026-05-31

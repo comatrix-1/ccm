@@ -31,7 +31,10 @@
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-[Gates determined based on constitution file]
+- Code Quality: Lint and format must pass; complexity justified; API docs included for new modules.
+- Testing: Unit/integration tests for changed behavior; changed-line coverage ≥ 80%; CI green.
+- UX: Conforms to design system; accessibility checks recorded; screenshots for UI changes.
+- Performance: Budgets declared in this plan; no main-thread blocking; measure critical paths.
 
 ## Project Structure
 
