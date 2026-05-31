@@ -1,0 +1,7 @@
+{
+  "integration": "pi",
+  "version": "0.6.1",
+  "scripts": {
+    "update-context": ".specify/integrations/pi/scripts/update-context.ps1"
+  }
+}
